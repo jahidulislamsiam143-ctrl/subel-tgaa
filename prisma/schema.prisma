@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  full_name     String   @default("")
+  role          String   @default("user")
+  wallet_balance Float   @default(0)
+  password      String   @default("")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  orders          Order[]
+  depositRequests DepositRequest[]
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  icon        String   @default("")
+  color       String   @default("")
+  sort_order  Int      @default(0)
+  is_active   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Product[]
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  price       Float
+  is_active   Boolean  @default(true)
+  description String   @default("")
+  image_url   String   @default("")
+  category_id String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  accounts  HotmailAccount[]
+  orders    Order[]
+  category  Category? @relation(fields: [category_id], references: [id], onDelete: SetNull)
+}
+
+model HotmailAccount {
+  id          String   @id @default(cuid())
+  product_id  String
+  account_data String
+  status      String   @default("available")
+  order_id    String?
+  sold_to     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id           String   @id @default(cuid())
+  user_email   String
+  user_id      String
+  product_id   String
+  product_name String
+  quantity     Int
+  unit_price   Float
+  total_price  Float
+  status       String   @default("completed")
+  account_ids  String   @default("")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+}
+
+model DepositRequest {
+  id             String   @id @default(cuid())
+  user_email     String
+  user_id        String
+  amount         Float
+  payment_method String
+  transaction_id String
+  status         String   @default("pending")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model AppSettings {
+  id             String   @id @default(cuid())
+  key            String   @unique
+  bkash_number   String   @default("")
+  nagad_number   String   @default("")
+  rocket_number  String   @default("")
+  binance_pay_id String   @default("")
+  usd_bdt_rate   Float    @default(110)
+  min_deposit    Float    @default(100)
+  admin_email    String   @default("")
+  support_link       String   @default("")
+  telegram_group_link String   @default("")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
